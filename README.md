@@ -53,49 +53,49 @@ The goal is to build an accurate, automated binary sentiment classification syst
 
 ---
 
-## ❉ Pipeline
+## ⚙️ Pipeline
 
 ```
 Raw Text Reviews
-      |
-      v
-┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐└
-|          TEXT PREPROCESSING            |
-|  1. Lowercasing                        |
-|  2. Remove URLs, HTML tags, mentions    |
-|  3. Remove punctuation & digits         |
-|  4. Stopword removal (NLTK)             |
-|  5. Lemmatization (WordNet)             |
-└┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┘
-      |
-      v
-┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐└
-|         FEATURE EXTRACTION              |
-|  TF-IDF Vectorizer                      |
-|  • max_features = 5,000                |
-|  • ngram_range = (1, 2)                |
-|  • min_df = 5                          |
-|  • sublinear_tf = True                 |
-└┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┘
-      |
-      v
-┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐└
-|         MODEL TRAINING & TUNING         |
-|  5 classifiers + GridSearchCV           |
-└┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┘
-      |
-      v
-┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐└
-|         EVALUATION                       |
-|  Accuracy, Precision, Recall, F1,       |
-|  Sensitivity, Specificity, ROC-AUC      |
-|  + 5-fold Cross-Validation              |
-└┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┘
+      │
+      ▼
+┌─────────────────────────────────────────┐
+│           TEXT PREPROCESSING            │
+│  1. Lowercasing                         │
+│  2. Remove URLs, HTML tags, mentions    │
+│  3. Remove punctuation & digits         │
+│  4. Stopword removal (NLTK)             │
+│  5. Lemmatization (WordNet)             │
+└─────────────────────────────────────────┘
+      │
+      ▼
+┌─────────────────────────────────────────┐
+│         FEATURE EXTRACTION              │
+│  TF-IDF Vectorizer                      │
+│  • max_features = 5,000                 │
+│  • ngram_range = (1, 2)                 │
+│  • min_df = 5                           │
+│  • sublinear_tf = True                  │
+└─────────────────────────────────────────┘
+      │
+      ▼
+┌─────────────────────────────────────────┐
+│         MODEL TRAINING & TUNING         │
+│  5 classifiers + GridSearchCV           │
+└─────────────────────────────────────────┘
+      │
+      ▼
+┌─────────────────────────────────────────┐
+│         EVALUATION                      │
+│  Accuracy, Precision, Recall, F1,       │
+│  Sensitivity, Specificity, ROC-AUC      │
+│  + 5-fold Cross-Validation              │
+└─────────────────────────────────────────┘
 ```
 
 ---
 
-## 🤖 Models
+## 🤖 models
 
 | Model | Configuration | Notes |
 |---|---|---|
@@ -109,30 +109,17 @@ Raw Text Reviews
 
 ## 📈 Results
 
-### Model Performance Comparison
-
 | Model | Accuracy | Precision | Recall | **F1-Score** | ROC-AUC | Sensitivity | Specificity |
 |---|---|---|---|---|---|---|---|
-| **ANN (MLP)** ⛐ | — | — | — | **0.8934** | **0.9583** | **0.9230** | **0.8568** |
+| **ANN (MLP)** ⭐ | — | — | — | **0.8934** | **0.9583** | **0.9230** | **0.8568** |
 | Naive Bayes | — | — | — | 0.8623 | — | — | — |
 | Random Forest | — | — | — | 0.8414 | — | — | — |
-| KNN | — | — | — | 0.8011 | — | — | — |
-| Decision Tree | — | — | — | 0.7678 | — | — | — |
+| KNN | ─ | ─ | ─ | 0.8011 | ─ | ─ | ─ |
+| Decision Tree | ─ | ─ | ─ | 0.7678 | ─ | ─ | ─ |
 
-### Key Findings
-
-- 🇗 **Best model:** ANN (MLP) — F1-Score = **0.8934**, ROC-AUC = **0.9583**
-- ⚡ **Best baseline:** Naive Bayes — F1 = 0.8623 at near-zero training time
-- ❌ **Weakest:** Decision Tree — F1 = 0.7678 (overfitting on sparse features)
-- ✅ **TF-IDF consistently outperforms Count Vectorizer** across all models
-- ✅ **5-fold cross-validation** results closely aligned with test set performance (no significant overfitting)
-
-### Vectorizer Comparison
-
-| Vectorizer | Best Model F1 | Notes |
-|---|---|---|
-| **TF-IDF** | **0.8934** | Down-weights frequent terms → better discrimination |
-| Count Vectorizer | Lower | Raw counts less discriminative |
+- **Best model:** ANN (MLP) — F1-Score = **0.8934**, ROC-AUC = **0.9583**
+- **Best baseline:** Naive Bayes — F1 = 0.8623 at near-zero training time
+- **Weakest:** Decision Tree — F1 = 0.7678 (overfitting on sparse features)
 
 ---
 
@@ -142,41 +129,49 @@ Raw Text Reviews
 imdb-sentiment-analysis/
 │
 ├── 📄 README.md
-├── 📄 report/
-│   └── datamining_report.pdf            # Full academic report
+├── report/
+│   └── datamining_report.pdf
 │
-├── 📊 data/
-│   ├── IMDB_Dataset.csv                 # Raw dataset (from Kaggle)
+├── data/
+│   ├── IMDB_Dataset.csv
 │   └── processed/
-│       ├── cleaned_reviews.csv          # After preprocessing
-│       └── tfidf_features.npz            # Sparse TF-IDF matrix
 │
-├── 📝 notebooks/
-│   ├── 01_eda.ipynb                   # Exploratory Data Analysis
-│   ├── 02_preprocessing.ipynb           # Text cleaning pipeline
-│   ├── 03_feature_extraction.ipynb      # TF-IDF vectorization
-│   ├── 04_model_training.ipynb          # All 5 classifiers
-│   ├── 05_evaluation.ipynb              # Metrics & confusion matrices
-│   └── 06_hyperparameter_tuning.ipynb   # GridSearchCV
+├── notebooks/
+│   ├── 01_eda.ipynb
+│   ├── 02_preprocessing.ipynb
+│   ├── 03_feature_extraction.ipynb
+│   ├── 04_model_training.ipynb
+│   ├── 05_evaluation.ipynb
+│   └── 06_hyperparameter_tuning.ipynb
 │
-├── 📝 src/
-│   ├── preprocessing.py                 # Text cleaning functions
-│   ├── feature_extraction.py            # TF-IDF vectorizer
-│   ├── models.py                        # Model definitions
-│   ├── evaluation.py                    # Metrics computation
-│   └── train.py                         # Main training script
+├── src/
+│   ├── preprocessing.py
+│   ├── feature_extraction.py
+│   ├── models.py
+│   ├── evaluation.py
+│   └── train.py
+│
+├── figures/
+│   ├── class_distribution.png
+│   ├── review_length_distribution.png
+│   ├── wordcloud_positive.png
+│   ├── wordcloud_negative.png
+│   ├── confusion_matrices.png
+│   └── roc_curves.png
+│
+├── models/
+│   └── best_model.pkl                   # Saved best model (ANN)
+│
+└── requirements.txt
+```
 
 ---
 
-## ▶ How to Run
-
-### Prerequisites
+## ▶️ How to Run
 
 ```bash
 pip install -r requirements.txt
 ```
-
-### Download NLTK Resources
 
 ```python
 import nltk
@@ -185,31 +180,10 @@ nltk.download('wordnet')
 nltk.download('omw-1.4')
 ```
 
-### Run the Full Pipeline
-
 ```bash
-# Clone the repository
 git clone https://github.com/YOUR_USERNAME/imdb-sentiment-analysis.git
 cd imdb-sentiment-analysis
-
-# Run training
 python src/train.py
-```
-
-### Quick Inference
-
-```python
-import joblib
-from src.preprocessing import preprocess_text
-
-# Load saved model
-model = joblib.load('models/best_model.pkl')
-
-# Predict sentiment
-review = "This movie was absolutely fantastic! Great acting and storyline."
-cleaned = preprocess_text(review)
-prediction = model.predict([cleaned])
-print("Sentiment:", "Positive" if prediction[0] == 1 else "Negative")
 ```
 
 ---
@@ -237,17 +211,6 @@ print("Sentiment:", "Positive" if prediction[0] == 1 else "Negative")
 - [ ] Test **cross-domain generalization** (Amazon, Yelp reviews)
 - [ ] Add **LIME / SHAP** explainability
 - [ ] Deploy as **REST API** (Flask / FastAPI)
-- [ ] Apply **data augmentation** (back-translation, synonym replacement)
-
----
-
-## 🔚 References
-
-- Maas, A.L. et al. (2011). Learning Word Vectors for Sentiment Analysis. *ACL 2011*.
-- Devlin, J. et al. (2019). BERT: Pre-training of Deep Bidirectional Transformers. *NAACL-HLT 2019*.
-- Yang, Z. et al. (2019). XLNet: Generalized Autoregressive Pretraining. *NeurIPS 2019*.
-- Kim, Y. (2014). Convolutional Neural Networks for Sentence Classification. *EMNLP 2014*.
-- Pedregosa, F. et al. (2011). Scikit-learn: Machine Learning in Python. *JMLR*, 12, 2825–2830.
 
 ---
 
