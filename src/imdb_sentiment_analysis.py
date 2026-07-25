@@ -79,3 +79,290 @@ if len(df) < 45000:
 else:
     print(f'✅ Verified: Full dataset ({len(df):,} rows)')
 print(f'\n📊 Class Distribution:\n{df["sentiment"].value_counts().to_string()}')
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+df['sentiment'].value_counts().plot(
+    kind='bar', ax=axes[0], color=['#2ecc71', '#e74c3c'])
+axes[0].set_title('Sentiment Distribution', fontweight='bold')
+axes[0].set_xlabel('Sentiment')
+axes[0].set_ylabel('Count')
+for i, v in enumerate(df['sentiment'].value_counts()):
+    axes[0].text(i, v + 200, str(v), ha='center', fontweight='bold')
+
+df['review_length'] = df['review'].apply(len)
+sns.boxplot(x='sentiment', y='review_length', data=df, ax=axes[1],
+            palette=['#3498db', '#e67e22'], showmeans=True,
+            meanprops={'marker': 'o', 'markerfacecolor': 'white', 'markeredgecolor': 'black'})
+axes[1].set_title('Review Length by Sentiment', fontweight='bold')
+axes[1].axhline(df['review_length'].mean(), color='red', linestyle='--',
+                label=f'Overall Mean: {df["review_length"].mean():.0f}')
+axes[1].legend()
+
+plt.tight_layout()
+plt.show()
+
+df = df[['review', 'sentiment']].copy()
+print('✅ 3.1 Feature Selection — kept: review, sentiment')
+
+before = len(df)
+df = df.dropna(subset=['review']).reset_index(drop=True)
+print(f'✅ 3.2 Missing Values — dropped {before - len(df)} null rows | Remaining: {len(df):,}')
+
+print('✅ 3.3 Text Combination — single review column confirmed')
+
+def preprocess_text(text):
+    text = str(text).lower()
+    text = re.sub(r'http\S+|www\S+|https\S+', '', text)
+    text = re.sub(r'<.*?>', '', text)
+    text = re.sub(r'@\w+|#\w+', '', text)
+    text = text.translate(str.maketrans('', '', string.punctuation + string.digits))
+    text = ' '.join(text.split())
+    stop_words = set(stopwords.words('english'))
+    words = [w for w in text.split() if w not in stop_words]
+    lemmatizer = WordNetLemmatizer()
+    words = [lemmatizer.lemmatize(w) for w in words]
+    return ' '.join(words)
+
+print('🧹 Preprocessing text (this may take ~1 min)...')
+t0 = time.time()
+df['cleaned_review'] = df['review'].apply(preprocess_text)
+df['review_length']  = df['cleaned_review'].apply(len)
+df['label']          = df['sentiment'].map({'positive': 1, 'negative': 0})
+
+before = len(df)
+df = df[df['cleaned_review'].str.strip() != ''].copy()
+if len(df) < before:
+    print(f'⚠️  Dropped {before - len(df)} empty rows after cleaning.')
+
+print(f'✅ Done in {time.time()-t0:.1f}s | Avg length: {df["review_length"].mean():.0f} chars')
+
+def plot_top_words(text_series, title, color_palette, ax=None):
+    words = ' '.join(text_series).split()
+    word_freq = Counter(words)
+    top_words = pd.DataFrame(word_freq.most_common(20), columns=['Word', 'Frequency'])
+    if ax is None:
+        plt.figure(figsize=(12, 6))
+        ax = plt.gca()
+    sns.barplot(x='Frequency', y='Word', data=top_words, ax=ax, palette=color_palette)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.set_xlabel('Frequency')
+    ax.set_ylabel('Word')
+    return top_words
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+for idx, (sent, cmap, title) in enumerate([
+    ('positive', 'Greens', 'Word Cloud — Positive Reviews'),
+    ('negative', 'Reds',   'Word Cloud — Negative Reviews')
+]):
+    text = ' '.join(df[df['sentiment'] == sent]['cleaned_review'])
+    wc = WordCloud(width=800, height=400, background_color='white',
+                   colormap=cmap, max_words=100).generate(text)
+    axes[idx].imshow(wc, interpolation='bilinear')
+    axes[idx].axis('off')
+    axes[idx].set_title(title, fontweight='bold')
+plt.tight_layout()
+plt.show()
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+plot_top_words(df[df['sentiment'] == 'positive']['cleaned_review'],
+               'Top 20 Words — Positive', 'Greens_d', axes[0])
+plot_top_words(df[df['sentiment'] == 'negative']['cleaned_review'],
+               'Top 20 Words — Negative', 'Reds_d',   axes[1])
+plt.tight_layout()
+plt.show()
+
+X_train, X_test, y_train, y_test = train_test_split(
+    df['cleaned_review'], df['label'],
+    test_size=0.2, random_state=42, stratify=df['label'])
+print(f'✅ 3.5 Train/Test split: {len(X_train):,} train / {len(X_test):,} test')
+
+tfidf = TfidfVectorizer(max_features=5000, ngram_range=(1, 2), min_df=5, sublinear_tf=True)
+X_train_tfidf = tfidf.fit_transform(X_train)
+X_test_tfidf  = tfidf.transform(X_test)
+
+count_vec = CountVectorizer(max_features=5000, ngram_range=(1, 2), min_df=5)
+X_train_count = count_vec.fit_transform(X_train)
+X_test_count  = count_vec.transform(X_test)
+
+print(f'✅ TF-IDF features : {X_train_tfidf.shape[1]}')
+print(f'✅ Count  features : {X_train_count.shape[1]}')
+
+balance = df['sentiment'].value_counts()
+ratio   = balance.min() / balance.max()
+print(f'\n✅ Class Balance:\n{balance.to_string()}')
+print(f'\nBalance ratio : {ratio:.3f}  (1.0 = perfectly balanced)')
+if ratio >= 0.9:
+    print('✅ Dataset is well-balanced — no oversampling needed.')
+else:
+    print('⚠️  Imbalance detected.')
+
+results = {}
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+t0 = time.time()
+nb_model = MultinomialNB(alpha=1.0)
+nb_model.fit(X_train_tfidf, y_train)
+train_time = time.time() - t0
+
+cv_f1  = cross_val_score(nb_model, X_train_tfidf, y_train, cv=cv, scoring='f1')
+cv_acc = cross_val_score(nb_model, X_train_tfidf, y_train, cv=cv, scoring='accuracy')
+
+y_pred  = nb_model.predict(X_test_tfidf)
+y_proba = nb_model.predict_proba(X_test_tfidf)[:, 1]
+
+results['Naive Bayes'] = {
+    'model': nb_model, 'y_pred': y_pred, 'y_proba': y_proba, 'train_time': train_time,
+    'Accuracy' : accuracy_score(y_test, y_pred),
+    'Precision': precision_score(y_test, y_pred),
+    'Recall'   : recall_score(y_test, y_pred),
+    'F1-Score' : f1_score(y_test, y_pred),
+    'ROC-AUC'  : roc_auc_score(y_test, y_proba),
+    'cv_f1_scores': cv_f1, 'cv_acc_scores': cv_acc,
+    'cv_f1_mean': cv_f1.mean(), 'cv_f1_std': cv_f1.std()
+}
+
+t0 = time.time()
+knn_model = KNeighborsClassifier(n_neighbors=5, metric='cosine')
+knn_model.fit(X_train_tfidf, y_train)
+train_time = time.time() - t0
+
+cv_f1  = cross_val_score(knn_model, X_train_tfidf, y_train, cv=cv, scoring='f1')
+cv_acc = cross_val_score(knn_model, X_train_tfidf, y_train, cv=cv, scoring='accuracy')
+
+y_pred  = knn_model.predict(X_test_tfidf)
+y_proba = knn_model.predict_proba(X_test_tfidf)[:, 1]
+
+results['KNN'] = {
+    'model': knn_model, 'y_pred': y_pred, 'y_proba': y_proba, 'train_time': train_time,
+    'Accuracy' : accuracy_score(y_test, y_pred),
+    'Precision': precision_score(y_test, y_pred),
+    'Recall'   : recall_score(y_test, y_pred),
+    'F1-Score' : f1_score(y_test, y_pred),
+    'ROC-AUC'  : roc_auc_score(y_test, y_proba),
+    'cv_f1_scores': cv_f1, 'cv_acc_scores': cv_acc,
+    'cv_f1_mean': cv_f1.mean(), 'cv_f1_std': cv_f1.std()
+}
+
+t0 = time.time()
+dt_model = DecisionTreeClassifier(max_depth=20, min_samples_split=10, random_state=42)
+dt_model.fit(X_train_tfidf, y_train)
+train_time = time.time() - t0
+
+cv_f1  = cross_val_score(dt_model, X_train_tfidf, y_train, cv=cv, scoring='f1')
+cv_acc = cross_val_score(dt_model, X_train_tfidf, y_train, cv=cv, scoring='accuracy')
+
+y_pred  = dt_model.predict(X_test_tfidf)
+y_proba = dt_model.predict_proba(X_test_tfidf)[:, 1]
+
+results['Decision Tree'] = {
+    'model': dt_model, 'y_pred': y_pred, 'y_proba': y_proba, 'train_time': train_time,
+    'Accuracy' : accuracy_score(y_test, y_pred),
+    'Precision': precision_score(y_test, y_pred),
+    'Recall'   : recall_score(y_test, y_pred),
+    'F1-Score' : f1_score(y_test, y_pred),
+    'ROC-AUC'  : roc_auc_score(y_test, y_proba),
+    'cv_f1_scores': cv_f1, 'cv_acc_scores': cv_acc,
+    'cv_f1_mean': cv_f1.mean(), 'cv_f1_std': cv_f1.std()
+}
+
+t0 = time.time()
+rf_model = RandomForestClassifier(n_estimators=100, max_depth=20,
+                                   min_samples_split=10, random_state=42, n_jobs=-1)
+rf_model.fit(X_train_tfidf, y_train)
+train_time = time.time() - t0
+
+cv_f1  = cross_val_score(rf_model, X_train_tfidf, y_train, cv=cv, scoring='f1')
+cv_acc = cross_val_score(rf_model, X_train_tfidf, y_train, cv=cv, scoring='accuracy')
+
+y_pred  = rf_model.predict(X_test_tfidf)
+y_proba = rf_model.predict_proba(X_test_tfidf)[:, 1]
+
+results['Random Forest'] = {
+    'model': rf_model, 'y_pred': y_pred, 'y_proba': y_proba, 'train_time': train_time,
+    'Accuracy' : accuracy_score(y_test, y_pred),
+    'Precision': precision_score(y_test, y_pred),
+    'Recall'   : recall_score(y_test, y_pred),
+    'F1-Score' : f1_score(y_test, y_pred),
+    'ROC-AUC'  : roc_auc_score(y_test, y_proba),
+    'cv_f1_scores': cv_f1, 'cv_acc_scores': cv_acc,
+    'cv_f1_mean': cv_f1.mean(), 'cv_f1_std': cv_f1.std()
+}
+
+t0 = time.time()
+ann_model = MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=300,
+                           early_stopping=True, random_state=42, verbose=False)
+ann_model.fit(X_train_tfidf, y_train)
+train_time = time.time() - t0
+
+cv_f1  = cross_val_score(ann_model, X_train_tfidf, y_train, cv=cv, scoring='f1')
+cv_acc = cross_val_score(ann_model, X_train_tfidf, y_train, cv=cv, scoring='accuracy')
+
+y_pred  = ann_model.predict(X_test_tfidf)
+y_proba = ann_model.predict_proba(X_test_tfidf)[:, 1]
+
+results['ANN'] = {
+    'model': ann_model, 'y_pred': y_pred, 'y_proba': y_proba, 'train_time': train_time,
+    'Accuracy' : accuracy_score(y_test, y_pred),
+    'Precision': precision_score(y_test, y_pred),
+    'Recall'   : recall_score(y_test, y_pred),
+    'F1-Score' : f1_score(y_test, y_pred),
+    'ROC-AUC'  : roc_auc_score(y_test, y_proba),
+    'cv_f1_scores': cv_f1, 'cv_acc_scores': cv_acc,
+    'cv_f1_mean': cv_f1.mean(), 'cv_f1_std': cv_f1.std()
+}
+
+for name, r in sorted(results.items(), key=lambda x: x[1]['F1-Score'], reverse=True):
+    cm = confusion_matrix(y_test, r['y_pred'])
+    tn, fp, fn, tp = cm.ravel()
+    results[name]['Sensitivity'] = tp / (tp + fn)
+    results[name]['Specificity'] = tn / (tn + fp)
+
+best_model_name = max(results, key=lambda x: results[x]['F1-Score'])
+best_r = results[best_model_name]
+
+comp_df_num = pd.DataFrame([
+    {'Model': n, 'Accuracy': r['Accuracy'], 'Precision': r['Precision'],
+     'Recall': r['Recall'], 'F1-Score': r['F1-Score'],
+     'Sensitivity': r['Sensitivity'], 'Specificity': r['Specificity'],
+     'ROC-AUC': r['ROC-AUC'], 'CV-F1': r['cv_f1_mean'], 'Time(s)': r['train_time']}
+    for n, r in results.items()
+]).sort_values('F1-Score', ascending=False)
+
+comp_df_num.to_csv('model_comparison_results.csv', index=False)
+
+plt.figure(figsize=(8, 6))
+for name, r in results.items():
+    if r['y_proba'] is not None:
+        fpr, tpr, _ = roc_curve(y_test, r['y_proba'])
+        plt.plot(fpr, tpr, label=f'{name} (AUC={auc(fpr,tpr):.3f})', linewidth=2)
+plt.plot([0, 1], [0, 1], 'k--')
+plt.legend(fontsize=9)
+plt.title('ROC Curves — All Models', fontweight='bold')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.tight_layout()
+plt.show()
+
+joblib.dump(results[best_model_name]['model'], 'best_model.pkl')
+joblib.dump(tfidf,     'tfidf_vectorizer.pkl')
+joblib.dump(count_vec, 'count_vectorizer.pkl')
+
+pred_df = pd.DataFrame({
+    'true_label'   : z_test.reset_index(drop=True) if hasattr(y_test, 'reset_index') else y_test,
+    'predicted'    : best_r['y_pred'],
+    'prob_positive': best_r['y_proba']
+})
+pred_df.to_csv('model_predictions.csv', index=False)
+
+print(f'\n🏆 Best Model : {best_model_name}')
+print(f'   Test F1    : {best_r["F1-Score"]:.4f}')
+print(f'   ROC-AUC    : {best_r["ROC-AUC"]:.4f}')
+print(f'   CV F1      : {best_r["cv_f1_mean"]:.4f} (±{best_r["cv_f1_std"]:.4f})')
+print('\n✅ Saved: best_model.pkl, tfidf_vectorizer.pkl, model_comparison_results.csv')
+
+from google.colab import files
+for f in ['model_comparison_results.csv', 'model_predictions.csv',
+           'best_model.pkl', 'tfidf_vectorizer.pkl', 'count_vectorizer.pkl']:
+    if os.path.exists(f):
+        files.download(f)
