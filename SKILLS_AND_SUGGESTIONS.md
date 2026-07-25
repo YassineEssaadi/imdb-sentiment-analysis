@@ -38,20 +38,6 @@
 
 ---
 
-## 🏷️ Suggested GitHub Repository Names
-
-| Name | Style | Notes |
-|---|---|---|
-| `imdb-sentiment-analysis` | Descriptive | ✅ Recommended — clear and widely recognized |
-| `nlp-text-classification-ml` | Generic | Good for broader portfolio |
-| `movie-review-classifier` | Intuitive | Easy to understand |
-| `sentiment-analysis-tfidf` | Technical | Highlights method |
-| `ml-sentiment-comparison` | Comparative | Highlights the study design |
-
-**Recommended:** `imdb-sentiment-analysis`
-
----
-
 ## 📝 GitHub Repository Description
 
 > Binary sentiment classification on 50K IMDB movie reviews. Comparative study of Naive Bayes, KNN, Decision Tree, Random Forest & ANN using TF-IDF. Best: ANN F1=0.89, ROC-AUC=0.96. Python/scikit-learn. TBS Data Mining 2026.
