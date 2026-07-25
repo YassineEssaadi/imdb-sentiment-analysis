@@ -1,4 +1,4 @@
-# 🎯 Project 2 — Skills & GitHub Suggestions
+# 🎯 Project 2 — Skills 
 
 ## 💼 Skills Demonstrated
 
@@ -42,7 +42,7 @@
 
 > Binary sentiment classification on 50K IMDB movie reviews. Comparative study of Naive Bayes, KNN, Decision Tree, Random Forest & ANN using TF-IDF. Best: ANN F1=0.89, ROC-AUC=0.96. Python/scikit-learn. TBS Data Mining 2026.
 
-## 🏷️ Suggested GitHub Topics/Tags
+## 🏷️ GitHub Topics/Tags
 
 ```
 nlp, sentiment-analysis, text-classification, machine-learning, python, scikit-learn,
