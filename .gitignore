@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+### Python 3 pycache directory
+*.py[cod]
+*.pyo
+*.pyc
+
+# Distribution / packaging
+.env
+venv/
+env/
+.venv/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Serialized models
+*.pkl
+*.pickle
+
+# Data files (do not commit large datasets)
+*.csv
+!**/sample_*.csv
+
+# OS files
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.sac
+
+# Logs
+### Log files
+### Log directories
+logs/
+*.log
