@@ -75,7 +75,7 @@ FEATURE EXTRACTION
   Baseline: Count Vectorizer (same settings, for comparison)
       |
       v
-MODEL TRACIING & TUNING
+MODEL TRAINING & TUNING
   5 classifiers trained on TF-IDF features
   + GridSearchCV (2-fold stratified CV) on NB, KNN, RF
   + 5-fold Stratified Cross-Validation for all models
@@ -106,7 +106,7 @@ EVALUATION
 | Model | Search Space |
 |---|---|
 | Naive Bayes | `alpha` ∈ {0.1, 0.5, 1.0, 2.0} |
-| KNN | `n_neighbors` ∈ {7 5, 7}, `metric` = cosine |
+| KNN | `n_neighbors` ∈ {5, 7}, `metric` = cosine |
 | Random Forest | `n_estimators` ∈ {50, 100}, `max_depth` ∈ {15, 20, None} |
 
 ---
@@ -121,7 +121,7 @@ EVALUATION
 | KNN | 0.8011 | 0.8631 | 0.8536 | 0.7226 |
 | Decision Tree | 0.7678 | 0.7696 | 0.8480 | 0.6392 |
 
-> **Note:** All metrics are extracted from the actual experimental results reported in the [project report](report/datamining_report.pdf) (Table 5.1). Full metrics including Accuracy, Precision, Recall, and cross-validation scores are available in the report.
+> **Note:** All metrics are extracted from the actual experimental results reported in the [project report](report/Datamining_Project_Report.pdf) (Table 5.1). Full metrics including Accuracy, Precision, Recall, and cross-validation scores are available in the report.
 
 - **Best model:** ANN (MLP) -- F1-Score = **0.8934**, ROC-AUC = **0.9583**
 - **Best baseline:** Naive Bayes -- F1 = 0.8623 at near-zero training time
@@ -193,10 +193,12 @@ imdb-sentiment-analysis/
 |
 |-- README.md
 |-- LICENSE
+|-- requirements.txt
+|-- .gitignore
 |-- src/
 |   |-- imdb_sentiment_analysis.py    # Full pipeline: preprocessing, training, evaluation
 |-- report/
-    |-- datamining_report.pdf         # Full academic report (PDF)
+    |-- Datamining_Project_Report.pdf  # Full academic report (PDF)
 ```
 
 > **Note:** This repository contains the academic report PDF and the full Python source code. The dataset (`IMDB Dataset.csv`) is not included due to size — download it from [Kaggle](https://www.kaggle.com/datasets/vishakhdapat/imdb-movie-reviews).
